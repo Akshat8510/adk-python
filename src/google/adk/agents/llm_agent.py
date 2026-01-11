@@ -14,7 +14,6 @@
 
 from __future__ import annotations
 
-import warnings
 import importlib
 import inspect
 import logging
