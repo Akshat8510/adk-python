@@ -166,9 +166,32 @@ async def test_canonical_global_instruction():
   assert bypass_state_injection
 
 
-async def test_async_canonical_global_instruction():
-  async def _global_instruction_provider(ctx: ReadonlyContext) -> str:
-    return f'global instruction: {ctx.state["state_var"]}'
+def test_validate_generate_content_config_thinking_config_allow():
+  """Tests that thinking_config is now allowed directly in the agent init."""
+  agent = LlmAgent(
+      name='test_agent',
+      generate_content_config=types.GenerateContentConfig(
+          thinking_config=types.ThinkingConfig(include_thoughts=True)
+      ),
+  )
+  assert agent.generate_content_config.thinking_config.include_thoughts is True
+
+
+def test_thinking_config_precedence_warning():
+  """Tests that a UserWarning is issued when both manual config and planner exist."""
+  from google.adk.planners.built_in_planner import BuiltInPlanner
+  
+  config = types.GenerateContentConfig(
+      thinking_config=types.ThinkingConfig(include_thoughts=True)
+  )
+  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+  
+  with pytest.warns(UserWarning, match="planner's configuration will take precedence"):
+    LlmAgent(
+        name='test_agent',
+        generate_content_config=config,
+        planner=planner
+    )
 
   agent = LlmAgent(
       name='test_agent', global_instruction=_global_instruction_provider
@@ -312,6 +335,56 @@ class TestCanonicalTools:
     assert tools[0].__class__.__name__ == 'FunctionTool'
     assert tools[1].name == 'google_search_agent'
     assert tools[1].__class__.__name__ == 'GoogleSearchAgentTool'
+
+  def test_validate_generate_content_config_thinking_config_allow():
+  """Tests that thinking_config is now allowed in generate_content_config."""
+  # This should NOT throw a ValueError
+  agent = LlmAgent(
+      name='test_agent',
+      generate_content_config=types.GenerateContentConfig(
+          thinking_config=types.ThinkingConfig(include_thoughts=True)
+      ),
+  )
+  assert agent.generate_content_config.thinking_config.include_thoughts is True
+
+
+def test_thinking_config_precedence_warning():
+  """Tests that a UserWarning is issued when both manual config and planner exist."""
+  from google.adk.planners.built_in_planner import BuiltInPlanner
+  
+  config = types.GenerateContentConfig(
+      thinking_config=types.ThinkingConfig(include_thoughts=True)
+  )
+  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+  
+  with pytest.warns(UserWarning, match="planner's configuration will take precedence"):
+    LlmAgent(
+        model='gemini-1.5-flash',
+        name='test_agent',
+        generate_content_config=config,
+        planner=planner
+    )
+
+
+async def test_builtin_planner_overwrite_logging(caplog):
+  """Tests that the planner logs an INFO message when overwriting a config."""
+  import logging
+  from google.adk.planners.built_in_planner import BuiltInPlanner
+  
+  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+  
+  # Create a request that already has a thinking_config
+  req = LlmRequest(
+      contents=[],
+      config=types.GenerateContentConfig(
+          thinking_config=types.ThinkingConfig(include_thoughts=True)
+      )
+  )
+  
+  with caplog.at_level(logging.INFO):
+    planner.apply_thinking_config(req)
+    
+  assert "Overwriting `thinking_config` from `generate_content_config`" in caplog.text
 
   async def test_handle_google_search_with_other_tools_no_bypass(self):
     """Test that google_search is not wrapped into an agent."""
