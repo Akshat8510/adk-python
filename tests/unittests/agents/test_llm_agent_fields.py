@@ -17,7 +17,9 @@
 from typing import Any
 from typing import Optional
 from unittest import mock
+import logging
 
+from google.adk.planners.built_in_planner import BuiltInPlanner
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.llm_agent import LlmAgent
@@ -247,7 +249,6 @@ def test_validate_generate_content_config_thinking_config_allow():
 
 def test_thinking_config_precedence_warning():
   """Tests that a UserWarning is issued when both manual config and planner exist."""
-  from google.adk.planners.built_in_planner import BuiltInPlanner
 
   config = types.GenerateContentConfig(
       thinking_config=types.ThinkingConfig(include_thoughts=True)
@@ -496,8 +497,6 @@ def test_agent_with_litellm_string_model(model_name):
 
 def test_builtin_planner_overwrite_logging(caplog):
   """Tests that the planner logs an INFO message when overwriting a config."""
-  import logging
-  from google.adk.planners.built_in_planner import BuiltInPlanner
 
   planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
 
