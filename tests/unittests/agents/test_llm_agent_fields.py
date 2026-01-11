@@ -234,13 +234,31 @@ def test_before_model_callback():
   assert agent.before_model_callback is not None
 
 
-def test_validate_generate_content_config_thinking_config_throw():
-  with pytest.raises(ValueError):
-    _ = LlmAgent(
+def test_validate_generate_content_config_thinking_config_allow():
+  """Tests that thinking_config is now allowed directly in the agent init."""
+  agent = LlmAgent(
+      name='test_agent',
+      generate_content_config=types.GenerateContentConfig(
+          thinking_config=types.ThinkingConfig(include_thoughts=True)
+      ),
+  )
+  assert agent.generate_content_config.thinking_config.include_thoughts is True
+
+
+def test_thinking_config_precedence_warning():
+  """Tests that a UserWarning is issued when both manual config and planner exist."""
+  from google.adk.planners.built_in_planner import BuiltInPlanner
+
+  config = types.GenerateContentConfig(
+      thinking_config=types.ThinkingConfig(include_thoughts=True)
+  )
+  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+
+  with pytest.warns(UserWarning, match="planner's configuration will take precedence"):
+    LlmAgent(
         name='test_agent',
-        generate_content_config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig()
-        ),
+        generate_content_config=config,
+        planner=planner
     )
 
 
@@ -280,35 +298,6 @@ def test_validate_generate_content_config_response_schema_throw():
     )
 
 
-def test_validate_generate_content_config_thinking_config_allow():
-  """Tests that thinking_config is now allowed directly in the agent init."""
-  agent = LlmAgent(
-      name='test_agent',
-      generate_content_config=types.GenerateContentConfig(
-          thinking_config=types.ThinkingConfig(include_thoughts=True)
-      ),
-  )
-  assert agent.generate_content_config.thinking_config.include_thoughts is True
-
-
-def test_thinking_config_precedence_warning():
-  """Tests that a UserWarning is issued when both manual config and planner exist."""
-  from google.adk.planners.built_in_planner import BuiltInPlanner
-  
-  config = types.GenerateContentConfig(
-      thinking_config=types.ThinkingConfig(include_thoughts=True)
-  )
-  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
-  
-  with pytest.warns(UserWarning, match="planner's configuration will take precedence"):
-    LlmAgent(
-        name='test_agent',
-        generate_content_config=config,
-        planner=planner
-    )
-
-
-
 def test_allow_transfer_by_default():
   sub_agent = LlmAgent(name='sub_agent')
   agent = LlmAgent(name='test_agent', sub_agents=[sub_agent])
@@ -344,28 +333,6 @@ class TestCanonicalTools:
     assert tools[0].__class__.__name__ == 'FunctionTool'
     assert tools[1].name == 'google_search_agent'
     assert tools[1].__class__.__name__ == 'GoogleSearchAgentTool'
-
-
-
-async def test_builtin_planner_overwrite_logging(caplog):
-  """Tests that the planner logs an INFO message when overwriting a config."""
-  import logging
-  from google.adk.planners.built_in_planner import BuiltInPlanner
-  
-  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
-  
-  # Create a request that already has a thinking_config
-  req = LlmRequest(
-      contents=[],
-      config=types.GenerateContentConfig(
-          thinking_config=types.ThinkingConfig(include_thoughts=True)
-      )
-  )
-  
-  with caplog.at_level(logging.INFO):
-    planner.apply_thinking_config(req)
-    
-  assert "Overwriting `thinking_config` from `generate_content_config`" in caplog.text
 
   async def test_handle_google_search_with_other_tools_no_bypass(self):
     """Test that google_search is not wrapped into an agent."""
@@ -525,3 +492,24 @@ def test_agent_with_litellm_string_model(model_name):
   agent = LlmAgent(name='test_agent', model=model_name)
   assert isinstance(agent.canonical_model, LiteLlm)
   assert agent.canonical_model.model == model_name
+
+
+async def test_builtin_planner_overwrite_logging(caplog):
+  """Tests that the planner logs an INFO message when overwriting a config."""
+  import logging
+  from google.adk.planners.built_in_planner import BuiltInPlanner
+
+  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+
+  # Create a request that already has a thinking_config
+  req = LlmRequest(
+      contents=[],
+      config=types.GenerateContentConfig(
+          thinking_config=types.ThinkingConfig(include_thoughts=True)
+      )
+  )
+
+  with caplog.at_level(logging.INFO):
+    planner.apply_thinking_config(req)
+
+  assert "Overwriting `thinking_config` from `generate_content_config`" in caplog.text
