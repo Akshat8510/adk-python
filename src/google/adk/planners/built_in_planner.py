@@ -56,14 +56,15 @@ class BuiltInPlanner(BasePlanner):
     Args:
       llm_request: The LLM request to apply the thinking config to.
     """
-    if self.thinking_config is not None:
-      # Log info if we are overwriting an existing config from generate_content_config
-      if llm_request.config.thinking_config is not None:
-        logging.info(
-            'Overwriting `thinking_config` from `generate_content_config` with '
-            'the one provided by the `BuiltInPlanner`.'
-        )
-      llm_request.config.thinking_config = self.thinking_config
+    llm_request.config = llm_request.config or types.GenerateContentConfig()
+
+    # Log info if we are overwriting an existing config from generate_content_config
+    if llm_request.config.thinking_config is not None:
+      logging.info(
+          'Overwriting `thinking_config` from `generate_content_config` with '
+          'the one provided by the `BuiltInPlanner`.'
+      )
+    llm_request.config.thinking_config = self.thinking_config
 
   @override
   def build_planning_instruction(
