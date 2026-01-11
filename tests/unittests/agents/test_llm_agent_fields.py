@@ -257,14 +257,15 @@ def test_before_model_callback():
   assert agent.before_model_callback is not None
 
 
-def test_validate_generate_content_config_thinking_config_throw():
-  with pytest.raises(ValueError):
-    _ = LlmAgent(
-        name='test_agent',
-        generate_content_config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig()
-        ),
-    )
+def test_validate_generate_content_config_thinking_config_allow():
+  """Tests that thinking_config is now allowed in generate_content_config."""
+  agent = LlmAgent(
+      name='test_agent',
+      generate_content_config=types.GenerateContentConfig(
+          thinking_config=types.ThinkingConfig(include_thoughts=True)
+      ),
+  )
+  assert agent.generate_content_config.thinking_config.include_thoughts is True
 
 
 def test_validate_generate_content_config_tools_throw():
