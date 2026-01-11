@@ -864,12 +864,18 @@ class LlmAgent(BaseAgent):
   def model_post_init(self, __context: Any) -> None:
     """Provides a warning if multiple thinking configurations are found."""
     super().model_post_init(__context)
-    
+
     # Check if thinking_config is set in both the model config and the planner
-    if (self.generate_content_config and 
-        self.generate_content_config.thinking_config and 
+    has_manual_thinking_config = (
+        self.generate_content_config and 
+        self.generate_content_config.thinking_config
+    )
+    planner_has_thinking_config = (
         self.planner and 
-        getattr(self.planner, 'thinking_config', None)):
+        getattr(self.planner, 'thinking_config', None)
+    )
+
+    if has_manual_thinking_config and planner_has_thinking_config:
       warnings.warn(
           'Both `thinking_config` in `generate_content_config` and an '
           'agent `planner` with thinking enabled are provided. The '
