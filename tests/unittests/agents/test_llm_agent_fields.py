@@ -494,7 +494,7 @@ def test_agent_with_litellm_string_model(model_name):
   assert agent.canonical_model.model == model_name
 
 
-async def test_builtin_planner_overwrite_logging(caplog):
+def test_builtin_planner_overwrite_logging(caplog):
   """Tests that the planner logs an INFO message when overwriting a config."""
   import logging
   from google.adk.planners.built_in_planner import BuiltInPlanner
