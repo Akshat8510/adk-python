@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import warnings
 import importlib
 import inspect
 import logging
@@ -849,8 +850,6 @@ class LlmAgent(BaseAgent):
   ) -> types.GenerateContentConfig:
     if not generate_content_config:
       return types.GenerateContentConfig()
-    if generate_content_config.thinking_config:
-      raise ValueError('Thinking config should be set via LlmAgent.planner.')
     if generate_content_config.tools:
       raise ValueError('All tools must be set via LlmAgent.tools.')
     if generate_content_config.system_instruction:
@@ -862,6 +861,23 @@ class LlmAgent(BaseAgent):
           'Response schema must be set via LlmAgent.output_schema.'
       )
     return generate_content_config
+  
+  def model_post_init(self, __context: Any) -> None:
+    """Provides a warning if multiple thinking configurations are found."""
+    super().model_post_init(__context)
+    
+    # Check if thinking_config is set in both the model config and the planner
+    if (self.generate_content_config and 
+        self.generate_content_config.thinking_config and 
+        self.planner and 
+        getattr(self.planner, 'thinking_config', None)):
+      warnings.warn(
+          'Both `thinking_config` in `generate_content_config` and an '
+          'agent `planner` with thinking enabled are provided. The '
+          'planner\'s configuration will take precedence.',
+          UserWarning,
+          stacklevel=2,
+      )
 
   @classmethod
   @experimental

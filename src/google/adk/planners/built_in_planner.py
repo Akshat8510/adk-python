@@ -14,6 +14,7 @@
 
 from typing import List
 from typing import Optional
+from venv import logger
 
 from google.genai import types
 from typing_extensions import override
@@ -57,6 +58,12 @@ class BuiltInPlanner(BasePlanner):
     """
     if self.thinking_config:
       llm_request.config = llm_request.config or types.GenerateContentConfig()
+      # Log if we are about to overwrite a config set directly by the user
+      if llm_request.config.thinking_config:
+        logger.info(
+            'BuiltInPlanner is overwriting the existing thinking_config '
+            'on the LlmRequest.'
+        )
       llm_request.config.thinking_config = self.thinking_config
 
   @override
