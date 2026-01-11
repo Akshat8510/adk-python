@@ -60,8 +60,8 @@ class BuiltInPlanner(BasePlanner):
       # Log info if we are overwriting an existing config from generate_content_config
       if llm_request.config.thinking_config is not None:
         logging.info(
-            'BuiltInPlanner is overwriting the existing thinking_config '
-            'on the LlmRequest.'
+            'Overwriting `thinking_config` from `generate_content_config` with '
+            'the one provided by the `BuiltInPlanner`.'
         )
       llm_request.config.thinking_config = self.thinking_config
 
