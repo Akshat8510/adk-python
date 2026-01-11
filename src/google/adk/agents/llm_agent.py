@@ -285,7 +285,7 @@ class LlmAgent(BaseAgent):
   """The additional content generation configurations.
 
   NOTE: not all fields are usable, e.g. tools must be configured via `tools`,
-  thinking_config must be configured via `planner` in LlmAgent.
+ thinking_config can be configured via generate_content_config or planner in LlmAgent.
 
   For example: use this config to adjust model temperature, configure safety
   settings, etc.
@@ -868,11 +868,11 @@ class LlmAgent(BaseAgent):
     # Check if thinking_config is set in both the model config and the planner
     has_manual_thinking_config = (
         self.generate_content_config and 
-        self.generate_content_config.thinking_config
+        self.generate_content_config.thinking_config is not None
     )
     planner_has_thinking_config = (
         self.planner and 
-        getattr(self.planner, 'thinking_config', None)
+        getattr(self.planner, 'thinking_config', None) is not None
     )
 
     if has_manual_thinking_config and planner_has_thinking_config:

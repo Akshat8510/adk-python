@@ -56,10 +56,9 @@ class BuiltInPlanner(BasePlanner):
     Args:
       llm_request: The LLM request to apply the thinking config to.
     """
-    if self.thinking_config:
-      llm_request.config = llm_request.config or types.GenerateContentConfig()
-      # Log if we are about to overwrite a config set directly by the user
-      if llm_request.config.thinking_config:
+    if self.thinking_config is not None:
+      # Log info if we are overwriting an existing config from generate_content_config
+      if llm_request.config.thinking_config is not None:
         logging.info(
             'BuiltInPlanner is overwriting the existing thinking_config '
             'on the LlmRequest.'
