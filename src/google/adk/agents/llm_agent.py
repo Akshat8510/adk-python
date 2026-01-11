@@ -866,12 +866,11 @@ class LlmAgent(BaseAgent):
     super().model_post_init(__context)
 
     # Check if thinking_config is set in both the model config and the planner
+    # Using getattr with a default value is cleaner for optional attributes.
     has_manual_thinking_config = (
-        self.generate_content_config and 
-        self.generate_content_config.thinking_config is not None
+        getattr(self.generate_content_config, 'thinking_config', None) is not None
     )
     planner_has_thinking_config = (
-        self.planner and 
         getattr(self.planner, 'thinking_config', None) is not None
     )
 

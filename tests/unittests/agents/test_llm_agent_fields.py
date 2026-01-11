@@ -165,6 +165,85 @@ async def test_canonical_global_instruction():
   assert canonical_global_instruction == 'global instruction: state_value'
   assert bypass_state_injection
 
+
+async def test_async_canonical_global_instruction():
+  async def _global_instruction_provider(ctx: ReadonlyContext) -> str:
+    return f'global instruction: {ctx.state["state_var"]}'
+
+  agent = LlmAgent(
+      name='test_agent', global_instruction=_global_instruction_provider
+  )
+  ctx = await _create_readonly_context(
+      agent, state={'state_var': 'state_value'}
+  )
+  canonical_global_instruction, bypass_state_injection = (
+      await agent.canonical_global_instruction(ctx)
+  )
+  assert canonical_global_instruction == 'global instruction: state_value'
+  assert bypass_state_injection
+
+
+def test_output_schema_with_sub_agents_will_not_throw():
+  class Schema(BaseModel):
+    pass
+
+  sub_agent = LlmAgent(
+      name='sub_agent',
+  )
+
+  agent = LlmAgent(
+      name='test_agent',
+      output_schema=Schema,
+      sub_agents=[sub_agent],
+  )
+
+  # Transfer is not disabled
+  assert not agent.disallow_transfer_to_parent
+  assert not agent.disallow_transfer_to_peers
+
+  assert agent.output_schema == Schema
+  assert agent.sub_agents == [sub_agent]
+
+
+def test_output_schema_with_tools_will_not_throw():
+  class Schema(BaseModel):
+    pass
+
+  def _a_tool():
+    pass
+
+  LlmAgent(
+      name='test_agent',
+      output_schema=Schema,
+      tools=[_a_tool],
+  )
+
+
+def test_before_model_callback():
+  def _before_model_callback(
+      callback_context: CallbackContext,
+      llm_request: LlmRequest,
+  ) -> None:
+    return None
+
+  agent = LlmAgent(
+      name='test_agent', before_model_callback=_before_model_callback
+  )
+
+  # TODO: add more logic assertions later.
+  assert agent.before_model_callback is not None
+
+
+def test_validate_generate_content_config_thinking_config_throw():
+  with pytest.raises(ValueError):
+    _ = LlmAgent(
+        name='test_agent',
+        generate_content_config=types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig()
+        ),
+    )
+
+
 def test_validate_generate_content_config_tools_throw():
   """Tests that tools cannot be set directly in config."""
   with pytest.raises(ValueError):
@@ -229,26 +308,6 @@ def test_thinking_config_precedence_warning():
     )
 
 
-async def test_builtin_planner_overwrite_logging(caplog):
-  """Tests that the planner logs an INFO message when overwriting a config."""
-  import logging
-  from google.adk.planners.built_in_planner import BuiltInPlanner
-  
-  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
-  
-  # Create a request that already has a thinking_config
-  req = LlmRequest(
-      contents=[],
-      config=types.GenerateContentConfig(
-          thinking_config=types.ThinkingConfig(include_thoughts=True)
-      )
-  )
-  
-  with caplog.at_level(logging.INFO):
-    planner.apply_thinking_config(req)
-    
-  assert "Overwriting `thinking_config` from `generate_content_config`" in caplog.text
-
 
 def test_allow_transfer_by_default():
   sub_agent = LlmAgent(name='sub_agent')
@@ -286,34 +345,6 @@ class TestCanonicalTools:
     assert tools[1].name == 'google_search_agent'
     assert tools[1].__class__.__name__ == 'GoogleSearchAgentTool'
 
-def test_validate_generate_content_config_thinking_config_allow():
-  """Tests that thinking_config is now allowed in generate_content_config."""
-  # This should NOT throw a ValueError
-  agent = LlmAgent(
-      name='test_agent',
-      generate_content_config=types.GenerateContentConfig(
-          thinking_config=types.ThinkingConfig(include_thoughts=True)
-      ),
-  )
-  assert agent.generate_content_config.thinking_config.include_thoughts is True
-
-
-def test_thinking_config_precedence_warning():
-  """Tests that a UserWarning is issued when both manual config and planner exist."""
-  from google.adk.planners.built_in_planner import BuiltInPlanner
-  
-  config = types.GenerateContentConfig(
-      thinking_config=types.ThinkingConfig(include_thoughts=True)
-  )
-  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
-  
-  with pytest.warns(UserWarning, match="planner's configuration will take precedence"):
-    LlmAgent(
-        model='gemini-1.5-flash',
-        name='test_agent',
-        generate_content_config=config,
-        planner=planner
-    )
 
 
 async def test_builtin_planner_overwrite_logging(caplog):
