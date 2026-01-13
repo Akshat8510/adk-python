@@ -865,15 +865,13 @@ class LlmAgent(BaseAgent):
     """Provides a warning if multiple thinking configurations are found."""
     super().model_post_init(__context)
 
-    # Check if thinking_config is set in both the model config and the planner
-    # Using getattr with a default value is cleaner for optional attributes.
+    # Check if thinking_config is set in both the model config and the planner.
+    # Using getattr for consistency in checking optional attributes.
     has_manual_thinking_config = (
-        self.generate_content_config is not None
-        and self.generate_content_config.thinking_config is not None
+        getattr(self.generate_content_config, 'thinking_config', None) is not None
     )
     planner_has_thinking_config = (
-        self.planner is not None
-        and getattr(self.planner, 'thinking_config', None) is not None
+        getattr(self.planner, 'thinking_config', None) is not None
     )
 
     if has_manual_thinking_config and planner_has_thinking_config:

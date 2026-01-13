@@ -14,10 +14,11 @@
 
 """Unit tests for canonical_xxx fields in LlmAgent."""
 
+import logging
 from typing import Any
 from typing import Optional
 from unittest import mock
-import logging
+
 
 from google.adk.planners.built_in_planner import BuiltInPlanner
 from google.adk.agents.callback_context import CallbackContext
