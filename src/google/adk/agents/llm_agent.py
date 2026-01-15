@@ -875,7 +875,7 @@ class LlmAgent(BaseAgent):
           'planner with `thinking_config` are provided. The '
           "planner's configuration will take precedence.",
           UserWarning,
-          stacklevel=3,
+          stacklevel=5,
       )
 
   @classmethod
