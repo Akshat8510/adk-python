@@ -19,8 +19,6 @@ from typing import Any
 from typing import Optional
 from unittest import mock
 
-
-from google.adk.planners.built_in_planner import BuiltInPlanner
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.llm_agent import LlmAgent
@@ -30,6 +28,7 @@ from google.adk.models.google_llm import Gemini
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.registry import LLMRegistry
+from google.adk.planners.built_in_planner import BuiltInPlanner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.adk.tools.google_search_tool import google_search
 from google.adk.tools.google_search_tool import GoogleSearchTool
@@ -254,14 +253,14 @@ def test_thinking_config_precedence_warning():
   config = types.GenerateContentConfig(
       thinking_config=types.ThinkingConfig(include_thoughts=True)
   )
-  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+  planner = BuiltInPlanner(
+      thinking_config=types.ThinkingConfig(include_thoughts=True)
+  )
 
-  with pytest.warns(UserWarning, match="planner's configuration will take precedence"):
-    LlmAgent(
-        name='test_agent',
-        generate_content_config=config,
-        planner=planner
-    )
+  with pytest.warns(
+      UserWarning, match="planner's configuration will take precedence"
+  ):
+    LlmAgent(name='test_agent', generate_content_config=config, planner=planner)
 
 
 def test_validate_generate_content_config_tools_throw():
@@ -288,6 +287,7 @@ def test_validate_generate_content_config_system_instruction_throw():
 
 def test_validate_generate_content_config_response_schema_throw():
   """Tests that response schema cannot be set directly in config."""
+
   class Schema(BaseModel):
     pass
 
@@ -499,17 +499,22 @@ def test_agent_with_litellm_string_model(model_name):
 def test_builtin_planner_overwrite_logging(caplog):
   """Tests that the planner logs an INFO message when overwriting a config."""
 
-  planner = BuiltInPlanner(thinking_config=types.ThinkingConfig(include_thoughts=True))
+  planner = BuiltInPlanner(
+      thinking_config=types.ThinkingConfig(include_thoughts=True)
+  )
 
   # Create a request that already has a thinking_config
   req = LlmRequest(
       contents=[],
       config=types.GenerateContentConfig(
           thinking_config=types.ThinkingConfig(include_thoughts=True)
-      )
+      ),
   )
 
   with caplog.at_level(logging.INFO):
     planner.apply_thinking_config(req)
 
-  assert "Overwriting `thinking_config` from `generate_content_config`" in caplog.text
+  assert (
+      'Overwriting `thinking_config` from `generate_content_config`'
+      in caplog.text
+  )

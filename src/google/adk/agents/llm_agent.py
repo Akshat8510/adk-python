@@ -860,27 +860,22 @@ class LlmAgent(BaseAgent):
           'Response schema must be set via LlmAgent.output_schema.'
       )
     return generate_content_config
-  
+
+  @override
   def model_post_init(self, __context: Any) -> None:
     """Provides a warning if multiple thinking configurations are found."""
     super().model_post_init(__context)
 
-    # Check if thinking_config is set in both the model config and the planner.
-    # Using getattr for consistency in checking optional attributes.
-    has_manual_thinking_config = (
-        getattr(self.generate_content_config, 'thinking_config', None) is not None
-    )
-    planner_has_thinking_config = (
-        getattr(self.planner, 'thinking_config', None) is not None
-    )
-
-    if has_manual_thinking_config and planner_has_thinking_config:
+    # Note: Using getattr to check both locations for thinking_config
+    if getattr(
+        self.generate_content_config, 'thinking_config', None
+    ) and getattr(self.planner, 'thinking_config', None):
       warnings.warn(
-          'Both `thinking_config` in `generate_content_config` and an '
-          'agent `planner` with thinking enabled are provided. The '
-          'planner\'s configuration will take precedence.',
+          'Both `thinking_config` in `generate_content_config` and a '
+          'planner with `thinking_config` are provided. The '
+          "planner's configuration will take precedence.",
           UserWarning,
-          stacklevel=2,
+          stacklevel=3,
       )
 
   @classmethod

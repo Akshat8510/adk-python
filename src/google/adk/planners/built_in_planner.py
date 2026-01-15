@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
+import logging
 from typing import List
 from typing import Optional
-import logging
 
 from google.genai import types
 from typing_extensions import override
@@ -23,6 +25,8 @@ from ..agents.callback_context import CallbackContext
 from ..agents.readonly_context import ReadonlyContext
 from ..models.llm_request import LlmRequest
 from .base_planner import BasePlanner
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BuiltInPlanner(BasePlanner):
@@ -59,7 +63,7 @@ class BuiltInPlanner(BasePlanner):
     if self.thinking_config:
       llm_request.config = llm_request.config or types.GenerateContentConfig()
       if llm_request.config.thinking_config:
-        logging.info(
+        _LOGGER.info(
             'Overwriting `thinking_config` from `generate_content_config` with '
             'the one provided by the `BuiltInPlanner`.'
         )
