@@ -19,6 +19,9 @@ from typing import Any
 from typing import Optional
 from unittest import mock
 
+from pydantic import BaseModel
+import pytest
+
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.llm_agent import LlmAgent
@@ -30,12 +33,10 @@ from google.adk.models.llm_request import LlmRequest
 from google.adk.models.registry import LLMRegistry
 from google.adk.planners.built_in_planner import BuiltInPlanner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from google.adk.tools.google_search_tool import google_search
 from google.adk.tools.google_search_tool import GoogleSearchTool
+from google.adk.tools.google_search_tool import google_search
 from google.adk.tools.vertex_ai_search_tool import VertexAiSearchTool
 from google.genai import types
-from pydantic import BaseModel
-import pytest
 
 
 async def _create_readonly_context(
