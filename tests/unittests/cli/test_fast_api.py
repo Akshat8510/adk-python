@@ -1411,5 +1411,29 @@ def test_builder_save_rejects_traversal(builder_test_client, tmp_path):
   assert not (tmp_path / "app" / "tmp" / "escape.yaml").exists()
 
 
+def test_agent_run_resume_without_message(test_app, create_test_session):
+  """Test that /run allows resuming a session without providing a new message."""
+  info = create_test_session
+  url = "/run"
+  # Note: 'new_message' is intentionally OMITTED here to test the fix
+  payload = {
+      "app_name": info["app_name"],
+      "user_id": info["user_id"],
+      "session_id": info["session_id"],
+      "streaming": False,
+  }
+
+  response = test_app.post(url, json=payload)
+
+  # Before your fix, this would return 422 (Validation Error)
+  # Now it should return 200 (Success)
+  assert response.status_code == 200
+  data = response.json()
+  assert isinstance(data, list)
+  # Our mock runner (dummy_run_async) returns 3 events by default
+  assert len(data) == 3
+  assert data[0]["author"] == "dummy agent"
+
+  logger.info("Agent run resume without message test passed")
 if __name__ == "__main__":
   pytest.main(["-xvs", __file__])
