@@ -1419,7 +1419,6 @@ def test_agent_run_resume_without_message(test_app, create_test_session):
   """Test that /run allows resuming a session without providing a new message."""
   info = create_test_session
   url = "/run"
-  # We no longer mock the runner. This tests the real logic in runners.py
   payload = {
       "app_name": info["app_name"],
       "user_id": info["user_id"],
@@ -1429,7 +1428,7 @@ def test_agent_run_resume_without_message(test_app, create_test_session):
 
   response = test_app.post(url, json=payload)
 
-  # Verify the web server and real runner work together to return success
+  # Verify the web server and dummy runner work together to return success
   assert response.status_code == 200
   assert response.json() == []
 
