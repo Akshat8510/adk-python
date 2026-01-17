@@ -498,11 +498,9 @@ class Runner:
             user_id=user_id, session_id=session_id
         )
         if not invocation_id and not new_message:
-          raise ValueError(
-              'Running an agent requires either a new_message or an '
-              'invocation_id to resume a previous invocation. '
-              f'Session: {session_id}, User: {user_id}'
-          )
+          # If nothing is provided, this is a no-op resume. We return early
+          # without yielding any events.
+          return
 
         if invocation_id:
           if (
