@@ -1415,26 +1415,20 @@ def test_agent_run_resume_without_message(test_app, create_test_session, monkeyp
   """Test that /run allows resuming a session without providing a new message."""
   info = create_test_session
   url = "/run"
-  # We simulate the NEW behavior of the real runner (returning no events)
   async def mock_run_empty(*args, **kwargs):
-    if False: yield  # Tells Python this is an async generator
+    if False: yield
     return
 
-  # Apply the mock to the Runner class
   monkeypatch.setattr(Runner, "run_async", mock_run_empty)
-
   payload = {
       "app_name": info["app_name"],
       "user_id": info["user_id"],
       "session_id": info["session_id"],
       "streaming": False,
   }
-
   response = test_app.post(url, json=payload)
-
-  # Verify the web server accepts it and the runner returns a clean empty list
   assert response.status_code == 200
   assert response.json() == []
-  
+
 if __name__ == "__main__":
   pytest.main(["-xvs", __file__])

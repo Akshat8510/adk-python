@@ -497,7 +497,13 @@ class Runner:
         session = await self._get_or_create_session(
             user_id=user_id, session_id=session_id
         )
+
         if not invocation_id and not new_message:
+          logger.info(
+            'Performing no-op resume for session %s: no new_message or '
+            'invocation_id.',
+            session_id,
+          )
           # If nothing is provided, this is a no-op resume. We return early
           # without yielding any events.
           return
