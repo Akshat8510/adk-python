@@ -134,6 +134,8 @@ async def dummy_run_async(
 ):
   
   if not invocation_id and not new_message:
+    if state_delta:
+      logger.warning("state_delta ignored in no-op resume")
     return
 
   run_config = run_config or RunConfig()
