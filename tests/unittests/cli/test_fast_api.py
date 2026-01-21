@@ -132,7 +132,7 @@ async def dummy_run_async(
     run_config: Optional[RunConfig] = None,
     invocation_id: Optional[str] = None,
 ):
-  
+
   if not invocation_id and not new_message:
     if state_delta:
       logger.warning("state_delta ignored in no-op resume")
@@ -1433,6 +1433,7 @@ def test_agent_run_resume_without_message(test_app, create_test_session):
   # Verify the web server and dummy runner work together to return success
   assert response.status_code == 200
   assert response.json() == []
+
 
 if __name__ == "__main__":
   pytest.main(["-xvs", __file__])
