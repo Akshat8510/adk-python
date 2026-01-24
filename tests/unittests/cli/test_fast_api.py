@@ -1426,8 +1426,19 @@ def test_builder_save_rejects_traversal(builder_test_client, tmp_path):
   assert not (tmp_path / "app" / "tmp" / "escape.yaml").exists()
 
 
-def test_agent_run_resume_without_message(test_app, create_test_session):
+async def _noop_run_async(*args, **kwargs):
+  """A mock that does nothing and yields no events for no-op resume tests."""
+  if False:
+    yield
+
+
+def test_agent_run_resume_without_message(
+    test_app, create_test_session, monkeypatch
+):
   """Test that /run allows resuming a session without providing a new message."""
+  # Override the global mock with a specific no-op mock for this test
+  monkeypatch.setattr("google.adk.runners.Runner.run_async", _noop_run_async)
+
   info = create_test_session
   url = "/run"
   payload = {
@@ -1439,15 +1450,18 @@ def test_agent_run_resume_without_message(test_app, create_test_session):
 
   response = test_app.post(url, json=payload)
 
-  # Verify the web server and dummy runner work together to return success
+  # Verify the web server handles the empty message and returns success
   assert response.status_code == 200
   assert response.json() == []
 
 
 def test_agent_run_resume_without_message_with_state_delta(
-    test_app, create_test_session
+    test_app, create_test_session, monkeypatch
 ):
   """Test that /run with no message accepts the request even with state_delta."""
+  # Override the global mock with a specific no-op mock for this test
+  monkeypatch.setattr("google.adk.runners.Runner.run_async", _noop_run_async)
+
   info = create_test_session
   url = "/run"
   payload = {
