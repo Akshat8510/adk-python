@@ -140,6 +140,11 @@ async def dummy_run_async(
           "session %s. The state_delta will be ignored.",
           session_id,
       )
+    logger.info(
+        "Performing no-op resume for session %s: no new_message or "
+        "invocation_id.",
+        session_id,
+    )
     return
 
   run_config = run_config or RunConfig()
