@@ -1434,6 +1434,27 @@ def test_agent_run_resume_without_message(test_app, create_test_session):
   assert response.status_code == 200
   assert response.json() == []
 
+def test_agent_run_resume_without_message_with_state_delta(
+    test_app, create_test_session, caplog
+):
+  """Test that /run with no message ignores state_delta and logs a warning."""
+  info = create_test_session
+  url = "/run"
+  payload = {
+      "app_name": info["app_name"],
+      "user_id": info["user_id"],
+      "session_id": info["session_id"],
+      "streaming": False,
+      "state_delta": {"some_key": "some_value"},
+  }
+
+  caplog.set_level(logging.WARNING)
+  response = test_app.post(url, json=payload)
+
+  assert response.status_code == 200
+  assert response.json() == []
+  # Verifies the warning you added to runners.py
+  assert "state_delta ignored in no-op resume" in caplog.text
 
 if __name__ == "__main__":
   pytest.main(["-xvs", __file__])
