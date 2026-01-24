@@ -1458,9 +1458,13 @@ def test_agent_run_resume_without_message_with_state_delta(
 
   assert response.status_code == 200
   assert response.json() == []
-  # Verifies the warning you added to runners.py
+
+  # Robust log verification as requested by the code review
+  assert len(caplog.records) == 1
+  assert caplog.records[0].levelname == "WARNING"
   assert (
-      "state_delta provided without new_message or invocation_id" in caplog.text
+      "state_delta provided without new_message or invocation_id"
+      in caplog.records[0].message
   )
 
 
