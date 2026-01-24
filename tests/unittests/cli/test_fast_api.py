@@ -135,7 +135,11 @@ async def dummy_run_async(
 
   if not invocation_id and not new_message:
     if state_delta:
-      logger.warning("state_delta ignored in no-op resume")
+      logger.warning(
+          "state_delta provided without new_message or invocation_id for "
+          "session %s. The state_delta will be ignored.",
+          session_id,
+      )
     return
 
   run_config = run_config or RunConfig()
@@ -1434,6 +1438,7 @@ def test_agent_run_resume_without_message(test_app, create_test_session):
   assert response.status_code == 200
   assert response.json() == []
 
+
 def test_agent_run_resume_without_message_with_state_delta(
     test_app, create_test_session, caplog
 ):
@@ -1454,7 +1459,10 @@ def test_agent_run_resume_without_message_with_state_delta(
   assert response.status_code == 200
   assert response.json() == []
   # Verifies the warning you added to runners.py
-  assert "state_delta ignored in no-op resume" in caplog.text
+  assert (
+      "state_delta provided without new_message or invocation_id" in caplog.text
+  )
+
 
 if __name__ == "__main__":
   pytest.main(["-xvs", __file__])
