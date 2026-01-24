@@ -132,7 +132,7 @@ async def dummy_run_async(
     run_config: Optional[RunConfig] = None,
     invocation_id: Optional[str] = None,
 ):
-  
+
   run_config = run_config or RunConfig()
   yield _event_1()
   await asyncio.sleep(0)
@@ -1418,8 +1418,16 @@ async def _noop_run_async(*args, **kwargs):
     yield
 
 
+@pytest.mark.parametrize(
+    "extra_payload",
+    [
+        {},
+        {"state_delta": {"some_key": "some_value"}},
+    ],
+    ids=["no_state_delta", "with_state_delta"],
+)
 def test_agent_run_resume_without_message(
-    test_app, create_test_session, monkeypatch
+    test_app, create_test_session, monkeypatch, extra_payload
 ):
   """Test that /run allows resuming a session without providing a new message."""
   # Override the global mock with a specific no-op mock for this test
@@ -1432,35 +1440,12 @@ def test_agent_run_resume_without_message(
       "user_id": info["user_id"],
       "session_id": info["session_id"],
       "streaming": False,
+      **extra_payload,
   }
 
   response = test_app.post(url, json=payload)
 
-  # Verify the web server handles the empty message and returns success
-  assert response.status_code == 200
-  assert response.json() == []
-
-
-def test_agent_run_resume_without_message_with_state_delta(
-    test_app, create_test_session, monkeypatch
-):
-  """Test that /run with no message accepts the request even with state_delta."""
-  # Override the global mock with a specific no-op mock for this test
-  monkeypatch.setattr("google.adk.runners.Runner.run_async", _noop_run_async)
-
-  info = create_test_session
-  url = "/run"
-  payload = {
-      "app_name": info["app_name"],
-      "user_id": info["user_id"],
-      "session_id": info["session_id"],
-      "streaming": False,
-      "state_delta": {"some_key": "some_value"},
-  }
-
-  response = test_app.post(url, json=payload)
-
-  # Only verify the HTTP layer (FastAPI accepts the request)
+  # Verify the web server handles the request and returns success
   assert response.status_code == 200
   assert response.json() == []
 
