@@ -132,21 +132,7 @@ async def dummy_run_async(
     run_config: Optional[RunConfig] = None,
     invocation_id: Optional[str] = None,
 ):
-
-  if not invocation_id and not new_message:
-    if state_delta:
-      logger.warning(
-          "state_delta provided without new_message or invocation_id for "
-          "session %s. The state_delta will be ignored.",
-          session_id,
-      )
-    logger.info(
-        "Performing no-op resume for session %s: no new_message or "
-        "invocation_id.",
-        session_id,
-    )
-    return
-
+  
   run_config = run_config or RunConfig()
   yield _event_1()
   await asyncio.sleep(0)
